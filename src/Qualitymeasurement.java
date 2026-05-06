@@ -1,6 +1,5 @@
 class Solution {
 
-    // Unit enum with conversion factor to FEET
     enum Unit {
         FEET(1.0),
         INCH(1.0 / 12.0),
@@ -14,7 +13,6 @@ class Solution {
         }
     }
 
-    // Generic Length class
     static class Length {
         double value;
         Unit unit;
@@ -25,12 +23,10 @@ class Solution {
             this.unit = unit;
         }
 
-        // Convert to base unit (feet)
         double toFeet() {
             return value * unit.toFeetFactor;
         }
 
-        // Equality check
         boolean isEqual(Length other) {
             if (other == null) {
                 throw new IllegalArgumentException("Invalid input: null");
@@ -38,15 +34,11 @@ class Solution {
             return this.toFeet() == other.toFeet();
         }
 
-        // 🔹 NEW: Instance conversion
         double convertTo(Unit targetUnit) {
             return convert(this.value, this.unit, targetUnit);
         }
 
-        // 🔹 NEW: Static conversion API
         static double convert(double value, Unit sourceUnit, Unit targetUnit) {
-
-            // Validation
             if (!Double.isFinite(value)) {
                 throw new IllegalArgumentException("Invalid number");
             }
@@ -54,16 +46,29 @@ class Solution {
                 throw new IllegalArgumentException("Invalid unit");
             }
 
-            // Step 1: convert to base (feet)
             double valueInFeet = value * sourceUnit.toFeetFactor;
-
-            // Step 2: convert from base to target
-            double result = valueInFeet / targetUnit.toFeetFactor;
-
-            return result;
+            return valueInFeet / targetUnit.toFeetFactor;
         }
 
-        // Validation
+        // 🔹 UC6 Addition
+        Length add(Length other) {
+            if (other == null) {
+                throw new IllegalArgumentException("Invalid input: null");
+            }
+            if (!Double.isFinite(this.value) || !Double.isFinite(other.value)) {
+                throw new IllegalArgumentException("Invalid number");
+            }
+
+            double sumInFeet = this.toFeet() + other.toFeet();
+            double result = sumInFeet / this.unit.toFeetFactor;
+
+            return new Length(result, this.unit);
+        }
+
+        static Length add(Length l1, Length l2) {
+            return l1.add(l2);
+        }
+
         void validate(double value, Unit unit) {
             if (!Double.isFinite(value)) {
                 throw new IllegalArgumentException("Invalid number");
@@ -74,32 +79,18 @@ class Solution {
         }
     }
 
-    // App class
     static class QuantityMeasurementApp {
         boolean compare(Length l1, Length l2) {
             return l1.isEqual(l2);
         }
     }
 
-    // Main method
     public static void main(String[] args) {
 
-        QuantityMeasurementApp app = new QuantityMeasurementApp();
+        Length l1 = new Length(1.0, Unit.FEET);
+        Length l2 = new Length(12.0, Unit.INCH);
 
-        // Equality (existing behavior)
-        Length l1 = new Length(1.0, Unit.YARD);
-        Length l2 = new Length(3.0, Unit.FEET);
-        System.out.println(app.compare(l1, l2)); // true
-
-        // 🔹 Conversion examples
-        double inches = Length.convert(1.0, Unit.FEET, Unit.INCH);
-        double feet = Length.convert(30.48, Unit.CM, Unit.FEET);
-
-        System.out.println(inches); // 12.0
-        System.out.println(feet);   // ~1.0
-
-        // Instance method usage
-        Length l3 = new Length(2.0, Unit.YARD);
-        System.out.println(l3.convertTo(Unit.FEET)); // 6.0
+        Length result = l1.add(l2);
+        System.out.println(result.value + " " + result.unit); // 2.0 FEET
     }
 }
