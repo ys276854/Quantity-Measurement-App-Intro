@@ -1,51 +1,66 @@
 class Solution {
 
     enum Unit {
-        FEET, INCH
+        FEET(1.0),
+        INCH(1.0 / 12.0);
+
+        final double toFeetFactor;
+
+        Unit(double factor) {
+            this.toFeetFactor = factor;
+        }
     }
 
-    static class Quantity {
-        double value;
-        Unit unit;
+    static class Length {
+        final double value;
+        final Unit unit;
 
-        Quantity(double value, Unit unit) {
+        Length(double value, Unit unit) {
+            validate(value, unit);
             this.value = value;
             this.unit = unit;
         }
 
-        // Convert everything to inches (base unit)
-        double toInches() {
-            switch (unit) {
-                case FEET:
-                    return value * 12;
-                case INCH:
-                    return value;
-                default:
-                    throw new IllegalArgumentException("Unknown unit");
+        double toFeet() {
+            return value * unit.toFeetFactor;
+        }
+
+        boolean isEqual(Length other) {
+            if (other == null) {
+                throw new IllegalArgumentException("Invalid input: null");
+            }
+            return Math.abs(this.toFeet() - other.toFeet()) < 0.0001;
+        }
+
+        private static void validate(double value, Unit unit) {
+            if (Double.isNaN(value)) {
+                throw new IllegalArgumentException("Invalid number");
+            }
+            if (unit == null) {
+                throw new IllegalArgumentException("Invalid unit");
             }
         }
     }
 
-    static void validate(double v1, double v2) {
-        if (Double.isNaN(v1) || Double.isNaN(v2)) {
-            throw new IllegalArgumentException("Invalid input");
+    static class QuantityMeasurementApp {
+        boolean compare(Length l1, Length l2) {
+            if (l1 == null || l2 == null) {
+                throw new IllegalArgumentException("Invalid input: null");
+            }
+            return l1.isEqual(l2);
         }
     }
 
-    static boolean areEqual(Quantity q1, Quantity q2) {
-        validate(q1.value, q2.value);
-
-        double v1 = q1.toInches();
-        double v2 = q2.toInches();
-
-        return Math.abs(v1 - v2) < 0.0001;
-    }
-
     public static void main(String[] args) {
+        QuantityMeasurementApp app = new QuantityMeasurementApp();
 
-        Quantity q1 = new Quantity(1.0, Unit.FEET);
-        Quantity q2 = new Quantity(12.0, Unit.INCH);
+        Length l1 = new Length(5.0, Unit.FEET);
+        Length l2 = new Length(5.0, Unit.FEET);
 
-        System.out.println(areEqual(q1, q2)); // true ✅
+        Length l3 = new Length(12.0, Unit.INCH);
+        Length l4 = new Length(1.0, Unit.FEET);
+
+        System.out.println(app.compare(l1, l2)); // true
+        System.out.println(app.compare(l3, l4)); // true
     }
 }
