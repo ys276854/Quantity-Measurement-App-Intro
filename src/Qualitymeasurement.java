@@ -50,7 +50,7 @@ class Solution {
             return valueInFeet / targetUnit.toFeetFactor;
         }
 
-        // 🔹 UC6 Addition
+        // UC6
         Length add(Length other) {
             if (other == null) {
                 throw new IllegalArgumentException("Invalid input: null");
@@ -65,8 +65,30 @@ class Solution {
             return new Length(result, this.unit);
         }
 
+        // UC7
+        Length add(Length other, Unit targetUnit) {
+            if (other == null) {
+                throw new IllegalArgumentException("Invalid input: null");
+            }
+            if (targetUnit == null) {
+                throw new IllegalArgumentException("Invalid target unit");
+            }
+            if (!Double.isFinite(this.value) || !Double.isFinite(other.value)) {
+                throw new IllegalArgumentException("Invalid number");
+            }
+
+            double sumInFeet = this.toFeet() + other.toFeet();
+            double result = sumInFeet / targetUnit.toFeetFactor;
+
+            return new Length(result, targetUnit);
+        }
+
         static Length add(Length l1, Length l2) {
             return l1.add(l2);
+        }
+
+        static Length add(Length l1, Length l2, Unit targetUnit) {
+            return l1.add(l2, targetUnit);
         }
 
         void validate(double value, Unit unit) {
@@ -90,7 +112,10 @@ class Solution {
         Length l1 = new Length(1.0, Unit.FEET);
         Length l2 = new Length(12.0, Unit.INCH);
 
-        Length result = l1.add(l2);
-        System.out.println(result.value + " " + result.unit); // 2.0 FEET
+        Length result1 = l1.add(l2);
+        System.out.println(result1.value + " " + result1.unit); // 2.0 FEET
+
+        Length result2 = l1.add(l2, Unit.YARD);
+        System.out.println(result2.value + " " + result2.unit); // ~0.667 YARD
     }
 }
