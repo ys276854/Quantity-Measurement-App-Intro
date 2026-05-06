@@ -1,7 +1,7 @@
-class QualityMeasurement {
+class Solution {
 
     enum Unit {
-        FEET
+        FEET, INCH
     }
 
     static class Quantity {
@@ -12,32 +12,40 @@ class QualityMeasurement {
             this.value = value;
             this.unit = unit;
         }
-    }
 
-    static class QuantityMeasurementApp {
-
-        boolean areEqual(Quantity q1, Quantity q2) {
-            if (q1 == null || q2 == null) {
-                throw new IllegalArgumentException("Invalid input: null values not allowed");
+        // Convert everything to inches (base unit)
+        double toInches() {
+            switch (unit) {
+                case FEET:
+                    return value * 12;
+                case INCH:
+                    return value;
+                default:
+                    throw new IllegalArgumentException("Unknown unit");
             }
-
-            if (q1.unit != Unit.FEET || q2.unit != Unit.FEET) {
-                throw new IllegalArgumentException("Both quantities must be in feet");
-            }
-
-            return Math.abs(q1.value - q2.value) < 0.0001;
         }
     }
 
+    static void validate(double v1, double v2) {
+        if (Double.isNaN(v1) || Double.isNaN(v2)) {
+            throw new IllegalArgumentException("Invalid input");
+        }
+    }
+
+    static boolean areEqual(Quantity q1, Quantity q2) {
+        validate(q1.value, q2.value);
+
+        double v1 = q1.toInches();
+        double v2 = q2.toInches();
+
+        return Math.abs(v1 - v2) < 0.0001;
+    }
+
     public static void main(String[] args) {
-        System.out.println("Quantity Measurement App Initialized");
 
-        QuantityMeasurementApp app = new QuantityMeasurementApp();
+        Quantity q1 = new Quantity(1.0, Unit.FEET);
+        Quantity q2 = new Quantity(12.0, Unit.INCH);
 
-        Quantity q1 = new Quantity(5.0, Unit.FEET);
-        Quantity q2 = new Quantity(5.0, Unit.FEET);
-
-        boolean result = app.areEqual(q1, q2);
-        System.out.println(result);
+        System.out.println(areEqual(q1, q2)); // true ✅
     }
 }
