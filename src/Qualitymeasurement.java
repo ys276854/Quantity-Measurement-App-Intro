@@ -1,30 +1,39 @@
 class Solution {
 
-    enum Unit {
+    // 🔹 Standalone LengthUnit (extracted)
+    enum LengthUnit {
         FEET(1.0),
         INCH(1.0 / 12.0),
         YARD(3.0),
         CM(0.393701 / 12.0);
 
-        double toFeetFactor;
+        private final double toFeetFactor;
 
-        Unit(double factor) {
+        LengthUnit(double factor) {
             this.toFeetFactor = factor;
+        }
+
+        double convertToBaseUnit(double value) {
+            return value * toFeetFactor;
+        }
+
+        double convertFromBaseUnit(double baseValue) {
+            return baseValue / toFeetFactor;
         }
     }
 
     static class Length {
         double value;
-        Unit unit;
+        LengthUnit unit;
 
-        Length(double value, Unit unit) {
+        Length(double value, LengthUnit unit) {
             validate(value, unit);
             this.value = value;
             this.unit = unit;
         }
 
         double toFeet() {
-            return value * unit.toFeetFactor;
+            return unit.convertToBaseUnit(value);
         }
 
         boolean isEqual(Length other) {
@@ -34,11 +43,11 @@ class Solution {
             return this.toFeet() == other.toFeet();
         }
 
-        double convertTo(Unit targetUnit) {
+        double convertTo(LengthUnit targetUnit) {
             return convert(this.value, this.unit, targetUnit);
         }
 
-        static double convert(double value, Unit sourceUnit, Unit targetUnit) {
+        static double convert(double value, LengthUnit sourceUnit, LengthUnit targetUnit) {
             if (!Double.isFinite(value)) {
                 throw new IllegalArgumentException("Invalid number");
             }
@@ -46,39 +55,31 @@ class Solution {
                 throw new IllegalArgumentException("Invalid unit");
             }
 
-            double valueInFeet = value * sourceUnit.toFeetFactor;
-            return valueInFeet / targetUnit.toFeetFactor;
+            double base = sourceUnit.convertToBaseUnit(value);
+            return targetUnit.convertFromBaseUnit(base);
         }
 
-        // UC6
         Length add(Length other) {
             if (other == null) {
                 throw new IllegalArgumentException("Invalid input: null");
             }
-            if (!Double.isFinite(this.value) || !Double.isFinite(other.value)) {
-                throw new IllegalArgumentException("Invalid number");
-            }
 
-            double sumInFeet = this.toFeet() + other.toFeet();
-            double result = sumInFeet / this.unit.toFeetFactor;
+            double sumBase = this.toFeet() + other.toFeet();
+            double result = this.unit.convertFromBaseUnit(sumBase);
 
             return new Length(result, this.unit);
         }
 
-        // UC7
-        Length add(Length other, Unit targetUnit) {
+        Length add(Length other, LengthUnit targetUnit) {
             if (other == null) {
                 throw new IllegalArgumentException("Invalid input: null");
             }
             if (targetUnit == null) {
                 throw new IllegalArgumentException("Invalid target unit");
             }
-            if (!Double.isFinite(this.value) || !Double.isFinite(other.value)) {
-                throw new IllegalArgumentException("Invalid number");
-            }
 
-            double sumInFeet = this.toFeet() + other.toFeet();
-            double result = sumInFeet / targetUnit.toFeetFactor;
+            double sumBase = this.toFeet() + other.toFeet();
+            double result = targetUnit.convertFromBaseUnit(sumBase);
 
             return new Length(result, targetUnit);
         }
@@ -87,11 +88,11 @@ class Solution {
             return l1.add(l2);
         }
 
-        static Length add(Length l1, Length l2, Unit targetUnit) {
+        static Length add(Length l1, Length l2, LengthUnit targetUnit) {
             return l1.add(l2, targetUnit);
         }
 
-        void validate(double value, Unit unit) {
+        void validate(double value, LengthUnit unit) {
             if (!Double.isFinite(value)) {
                 throw new IllegalArgumentException("Invalid number");
             }
@@ -109,13 +110,19 @@ class Solution {
 
     public static void main(String[] args) {
 
-        Length l1 = new Length(1.0, Unit.FEET);
-        Length l2 = new Length(12.0, Unit.INCH);
+        Length l1 = new Length(1.0, LengthUnit.FEET);
+        Length l2 = new Length(12.0, LengthUnit.INCH);
 
         Length result1 = l1.add(l2);
         System.out.println(result1.value + " " + result1.unit); // 2.0 FEET
 
-        Length result2 = l1.add(l2, Unit.YARD);
+        Length result2 = l1.add(l2, LengthUnit.YARD);
         System.out.println(result2.value + " " + result2.unit); // ~0.667 YARD
+
+        double inches = Length.convert(1.0, LengthUnit.FEET, LengthUnit.INCH);
+        System.out.println(inches); // 12.0
+
+        QuantityMeasurementApp app = new QuantityMeasurementApp();
+        System.out.println(app.compare(l1, l2)); // true
     }
 }
