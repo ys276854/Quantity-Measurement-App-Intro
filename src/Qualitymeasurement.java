@@ -15,9 +15,7 @@ class Solution {
 
         private final double factor;
 
-        LengthUnit(double factor) {
-            this.factor = factor;
-        }
+        LengthUnit(double factor) { this.factor = factor; }
 
         public double getConversionFactor() { return factor; }
         public double convertToBaseUnit(double value) { return value * factor; }
@@ -32,9 +30,7 @@ class Solution {
 
         private final double factor;
 
-        WeightUnit(double factor) {
-            this.factor = factor;
-        }
+        WeightUnit(double factor) { this.factor = factor; }
 
         public double getConversionFactor() { return factor; }
         public double convertToBaseUnit(double value) { return value * factor; }
@@ -42,7 +38,6 @@ class Solution {
         public String getUnitName() { return name(); }
     }
 
-    // 🔹 NEW: VolumeUnit
     enum VolumeUnit implements IMeasurable {
         LITRE(1.0),
         MILLILITRE(0.001),
@@ -50,9 +45,7 @@ class Solution {
 
         private final double factor;
 
-        VolumeUnit(double factor) {
-            this.factor = factor;
-        }
+        VolumeUnit(double factor) { this.factor = factor; }
 
         public double getConversionFactor() { return factor; }
         public double convertToBaseUnit(double value) { return value * factor; }
@@ -65,9 +58,7 @@ class Solution {
         private final U unit;
 
         Quantity(double value, U unit) {
-            if (!Double.isFinite(value) || unit == null) {
-                throw new IllegalArgumentException();
-            }
+            if (!Double.isFinite(value) || unit == null) throw new IllegalArgumentException();
             this.value = value;
             this.unit = unit;
         }
@@ -78,11 +69,8 @@ class Solution {
 
         public Quantity<U> convertTo(U targetUnit) {
             if (targetUnit == null) throw new IllegalArgumentException();
-
             double base = toBase();
-            double converted = targetUnit.convertFromBaseUnit(base);
-
-            return new Quantity<>(round(converted), targetUnit);
+            return new Quantity<>(round(targetUnit.convertFromBaseUnit(base)), targetUnit);
         }
 
         public Quantity<U> add(Quantity<U> other) {
@@ -90,25 +78,44 @@ class Solution {
         }
 
         public Quantity<U> add(Quantity<U> other, U targetUnit) {
-            if (other == null || targetUnit == null) {
+            validate(other, targetUnit);
+            double sum = this.toBase() + other.toBase();
+            return new Quantity<>(round(targetUnit.convertFromBaseUnit(sum)), targetUnit);
+        }
+
+        // 🔹 UC12 Subtraction
+        public Quantity<U> subtract(Quantity<U> other) {
+            return subtract(other, this.unit);
+        }
+
+        public Quantity<U> subtract(Quantity<U> other, U targetUnit) {
+            validate(other, targetUnit);
+            double diff = this.toBase() - other.toBase();
+            return new Quantity<>(round(targetUnit.convertFromBaseUnit(diff)), targetUnit);
+        }
+
+        // 🔹 UC12 Division
+        public double divide(Quantity<U> other) {
+            if (other == null) throw new IllegalArgumentException();
+            if (this.unit.getClass() != other.unit.getClass()) throw new IllegalArgumentException();
+            if (!Double.isFinite(other.value) || other.toBase() == 0.0) {
                 throw new IllegalArgumentException();
             }
+            return this.toBase() / other.toBase();
+        }
 
-            double sum = this.toBase() + other.toBase();
-            double result = targetUnit.convertFromBaseUnit(sum);
-
-            return new Quantity<>(round(result), targetUnit);
+        private void validate(Quantity<U> other, U targetUnit) {
+            if (other == null || targetUnit == null) throw new IllegalArgumentException();
+            if (this.unit.getClass() != other.unit.getClass()) throw new IllegalArgumentException();
+            if (!Double.isFinite(other.value)) throw new IllegalArgumentException();
         }
 
         @Override
         public boolean equals(Object obj) {
             if (this == obj) return true;
             if (obj == null || getClass() != obj.getClass()) return false;
-
             Quantity<?> other = (Quantity<?>) obj;
-
             if (this.unit.getClass() != other.unit.getClass()) return false;
-
             return Double.compare(this.toBase(), other.toBase()) == 0;
         }
 
@@ -144,22 +151,34 @@ class Solution {
         <U extends IMeasurable> Quantity<U> add(Quantity<U> q1, Quantity<U> q2, U targetUnit) {
             return q1.add(q2, targetUnit);
         }
+
+        <U extends IMeasurable> Quantity<U> subtract(Quantity<U> q1, Quantity<U> q2) {
+            return q1.subtract(q2);
+        }
+
+        <U extends IMeasurable> Quantity<U> subtract(Quantity<U> q1, Quantity<U> q2, U targetUnit) {
+            return q1.subtract(q2, targetUnit);
+        }
+
+        <U extends IMeasurable> double divide(Quantity<U> q1, Quantity<U> q2) {
+            return q1.divide(q2);
+        }
     }
 
     public static void main(String[] args) {
 
         QuantityMeasurementApp app = new QuantityMeasurementApp();
 
-        // Volume usage
-        Quantity<VolumeUnit> v1 = new Quantity<>(1.0, VolumeUnit.LITRE);
-        Quantity<VolumeUnit> v2 = new Quantity<>(1000.0, VolumeUnit.MILLILITRE);
+        Quantity<LengthUnit> l1 = new Quantity<>(10.0, LengthUnit.FEET);
+        Quantity<LengthUnit> l2 = new Quantity<>(6.0, LengthUnit.INCH);
 
-        System.out.println(app.compare(v1, v2)); // true
+        System.out.println(app.subtract(l1, l2)); // 9.5 FEET
+        System.out.println(app.divide(l1, l2));   // ratio
 
-        Quantity<VolumeUnit> v3 = v1.convertTo(VolumeUnit.GALLON);
-        System.out.println(v3); // ~0.26 GALLON
+        Quantity<VolumeUnit> v1 = new Quantity<>(5.0, VolumeUnit.LITRE);
+        Quantity<VolumeUnit> v2 = new Quantity<>(2.0, VolumeUnit.LITRE);
 
-        Quantity<VolumeUnit> sum = v1.add(v2, VolumeUnit.LITRE);
-        System.out.println(sum); // 2.0 LITRE
+        System.out.println(app.subtract(v1, v2)); // 3.0 LITRE
+        System.out.println(app.divide(v1, v2));   // 2.5
     }
 }
