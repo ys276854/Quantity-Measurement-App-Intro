@@ -57,6 +57,8 @@ class Solution {
         private final double value;
         private final U unit;
 
+        private enum Operation { ADD, SUBTRACT, DIVIDE }
+
         Quantity(double value, U unit) {
             if (!Double.isFinite(value) || unit == null) throw new IllegalArgumentException();
             this.value = value;
@@ -65,6 +67,24 @@ class Solution {
 
         double toBase() {
             return unit.convertToBaseUnit(value);
+        }
+
+        private double operate(Quantity<U> other, Operation op) {
+            if (other == null) throw new IllegalArgumentException();
+            if (this.unit.getClass() != other.unit.getClass()) throw new IllegalArgumentException();
+            if (!Double.isFinite(other.value)) throw new IllegalArgumentException();
+
+            double a = this.toBase();
+            double b = other.toBase();
+
+            switch (op) {
+                case ADD: return a + b;
+                case SUBTRACT: return a - b;
+                case DIVIDE:
+                    if (b == 0.0) throw new IllegalArgumentException();
+                    return a / b;
+                default: throw new IllegalArgumentException();
+            }
         }
 
         public Quantity<U> convertTo(U targetUnit) {
@@ -78,36 +98,23 @@ class Solution {
         }
 
         public Quantity<U> add(Quantity<U> other, U targetUnit) {
-            validate(other, targetUnit);
-            double sum = this.toBase() + other.toBase();
-            return new Quantity<>(round(targetUnit.convertFromBaseUnit(sum)), targetUnit);
+            if (targetUnit == null) throw new IllegalArgumentException();
+            double result = operate(other, Operation.ADD);
+            return new Quantity<>(round(targetUnit.convertFromBaseUnit(result)), targetUnit);
         }
 
-        // 🔹 UC12 Subtraction
         public Quantity<U> subtract(Quantity<U> other) {
             return subtract(other, this.unit);
         }
 
         public Quantity<U> subtract(Quantity<U> other, U targetUnit) {
-            validate(other, targetUnit);
-            double diff = this.toBase() - other.toBase();
-            return new Quantity<>(round(targetUnit.convertFromBaseUnit(diff)), targetUnit);
+            if (targetUnit == null) throw new IllegalArgumentException();
+            double result = operate(other, Operation.SUBTRACT);
+            return new Quantity<>(round(targetUnit.convertFromBaseUnit(result)), targetUnit);
         }
 
-        // 🔹 UC12 Division
         public double divide(Quantity<U> other) {
-            if (other == null) throw new IllegalArgumentException();
-            if (this.unit.getClass() != other.unit.getClass()) throw new IllegalArgumentException();
-            if (!Double.isFinite(other.value) || other.toBase() == 0.0) {
-                throw new IllegalArgumentException();
-            }
-            return this.toBase() / other.toBase();
-        }
-
-        private void validate(Quantity<U> other, U targetUnit) {
-            if (other == null || targetUnit == null) throw new IllegalArgumentException();
-            if (this.unit.getClass() != other.unit.getClass()) throw new IllegalArgumentException();
-            if (!Double.isFinite(other.value)) throw new IllegalArgumentException();
+            return operate(other, Operation.DIVIDE);
         }
 
         @Override
@@ -172,13 +179,8 @@ class Solution {
         Quantity<LengthUnit> l1 = new Quantity<>(10.0, LengthUnit.FEET);
         Quantity<LengthUnit> l2 = new Quantity<>(6.0, LengthUnit.INCH);
 
-        System.out.println(app.subtract(l1, l2)); // 9.5 FEET
-        System.out.println(app.divide(l1, l2));   // ratio
-
-        Quantity<VolumeUnit> v1 = new Quantity<>(5.0, VolumeUnit.LITRE);
-        Quantity<VolumeUnit> v2 = new Quantity<>(2.0, VolumeUnit.LITRE);
-
-        System.out.println(app.subtract(v1, v2)); // 3.0 LITRE
-        System.out.println(app.divide(v1, v2));   // 2.5
+        System.out.println(app.add(l1, l2));
+        System.out.println(app.subtract(l1, l2));
+        System.out.println(app.divide(l1, l2));
     }
 }
