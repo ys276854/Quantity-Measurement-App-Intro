@@ -1,6 +1,5 @@
 class Solution {
 
-    // 🔹 Common Interface
     interface IMeasurable {
         double getConversionFactor();
         double convertToBaseUnit(double value);
@@ -8,7 +7,6 @@ class Solution {
         String getUnitName();
     }
 
-    // 🔹 LengthUnit
     enum LengthUnit implements IMeasurable {
         FEET(1.0),
         INCH(1.0 / 12.0),
@@ -21,24 +19,12 @@ class Solution {
             this.factor = factor;
         }
 
-        public double getConversionFactor() {
-            return factor;
-        }
-
-        public double convertToBaseUnit(double value) {
-            return value * factor;
-        }
-
-        public double convertFromBaseUnit(double baseValue) {
-            return baseValue / factor;
-        }
-
-        public String getUnitName() {
-            return name();
-        }
+        public double getConversionFactor() { return factor; }
+        public double convertToBaseUnit(double value) { return value * factor; }
+        public double convertFromBaseUnit(double baseValue) { return baseValue / factor; }
+        public String getUnitName() { return name(); }
     }
 
-    // 🔹 WeightUnit
     enum WeightUnit implements IMeasurable {
         KG(1.0),
         G(1.0 / 1000.0),
@@ -50,24 +36,30 @@ class Solution {
             this.factor = factor;
         }
 
-        public double getConversionFactor() {
-            return factor;
-        }
-
-        public double convertToBaseUnit(double value) {
-            return value * factor;
-        }
-
-        public double convertFromBaseUnit(double baseValue) {
-            return baseValue / factor;
-        }
-
-        public String getUnitName() {
-            return name();
-        }
+        public double getConversionFactor() { return factor; }
+        public double convertToBaseUnit(double value) { return value * factor; }
+        public double convertFromBaseUnit(double baseValue) { return baseValue / factor; }
+        public String getUnitName() { return name(); }
     }
 
-    // 🔹 Generic Quantity
+    // 🔹 NEW: VolumeUnit
+    enum VolumeUnit implements IMeasurable {
+        LITRE(1.0),
+        MILLILITRE(0.001),
+        GALLON(3.78541);
+
+        private final double factor;
+
+        VolumeUnit(double factor) {
+            this.factor = factor;
+        }
+
+        public double getConversionFactor() { return factor; }
+        public double convertToBaseUnit(double value) { return value * factor; }
+        public double convertFromBaseUnit(double baseValue) { return baseValue / factor; }
+        public String getUnitName() { return name(); }
+    }
+
     static class Quantity<U extends IMeasurable> {
         private final double value;
         private final U unit;
@@ -135,7 +127,6 @@ class Solution {
         }
     }
 
-    // 🔹 Simplified App
     static class QuantityMeasurementApp {
 
         <U extends IMeasurable> boolean compare(Quantity<U> q1, Quantity<U> q2) {
@@ -159,18 +150,16 @@ class Solution {
 
         QuantityMeasurementApp app = new QuantityMeasurementApp();
 
-        // Length
-        Quantity<LengthUnit> l1 = new Quantity<>(1.0, LengthUnit.FEET);
-        Quantity<LengthUnit> l2 = new Quantity<>(12.0, LengthUnit.INCH);
+        // Volume usage
+        Quantity<VolumeUnit> v1 = new Quantity<>(1.0, VolumeUnit.LITRE);
+        Quantity<VolumeUnit> v2 = new Quantity<>(1000.0, VolumeUnit.MILLILITRE);
 
-        System.out.println(app.compare(l1, l2)); // true
-        System.out.println(app.add(l1, l2));     // 2.0 FEET
+        System.out.println(app.compare(v1, v2)); // true
 
-        // Weight
-        Quantity<WeightUnit> w1 = new Quantity<>(1.0, WeightUnit.KG);
-        Quantity<WeightUnit> w2 = new Quantity<>(1000.0, WeightUnit.G);
+        Quantity<VolumeUnit> v3 = v1.convertTo(VolumeUnit.GALLON);
+        System.out.println(v3); // ~0.26 GALLON
 
-        System.out.println(app.compare(w1, w2)); // true
-        System.out.println(app.add(w1, w2, WeightUnit.KG)); // 2.0 KG
+        Quantity<VolumeUnit> sum = v1.add(v2, VolumeUnit.LITRE);
+        System.out.println(sum); // 2.0 LITRE
     }
 }
