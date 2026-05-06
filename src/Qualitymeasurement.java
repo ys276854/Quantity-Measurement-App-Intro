@@ -38,9 +38,34 @@ class Solution {
             return this.toFeet() == other.toFeet();
         }
 
+        // 🔹 NEW: Instance conversion
+        double convertTo(Unit targetUnit) {
+            return convert(this.value, this.unit, targetUnit);
+        }
+
+        // 🔹 NEW: Static conversion API
+        static double convert(double value, Unit sourceUnit, Unit targetUnit) {
+
+            // Validation
+            if (!Double.isFinite(value)) {
+                throw new IllegalArgumentException("Invalid number");
+            }
+            if (sourceUnit == null || targetUnit == null) {
+                throw new IllegalArgumentException("Invalid unit");
+            }
+
+            // Step 1: convert to base (feet)
+            double valueInFeet = value * sourceUnit.toFeetFactor;
+
+            // Step 2: convert from base to target
+            double result = valueInFeet / targetUnit.toFeetFactor;
+
+            return result;
+        }
+
         // Validation
         void validate(double value, Unit unit) {
-            if (Double.isNaN(value)) {
+            if (!Double.isFinite(value)) {
                 throw new IllegalArgumentException("Invalid number");
             }
             if (unit == null) {
@@ -61,14 +86,20 @@ class Solution {
 
         QuantityMeasurementApp app = new QuantityMeasurementApp();
 
-        // Cross-unit comparisons
-        Length l1 = new Length(1.0, Unit.YARD);     // 3 feet
+        // Equality (existing behavior)
+        Length l1 = new Length(1.0, Unit.YARD);
         Length l2 = new Length(3.0, Unit.FEET);
-
-        Length l3 = new Length(2.54, Unit.CM);      // 1 inch
-        Length l4 = new Length(1.0, Unit.INCH);
-
         System.out.println(app.compare(l1, l2)); // true
-        System.out.println(app.compare(l3, l4)); // true
+
+        // 🔹 Conversion examples
+        double inches = Length.convert(1.0, Unit.FEET, Unit.INCH);
+        double feet = Length.convert(30.48, Unit.CM, Unit.FEET);
+
+        System.out.println(inches); // 12.0
+        System.out.println(feet);   // ~1.0
+
+        // Instance method usage
+        Length l3 = new Length(2.0, Unit.YARD);
+        System.out.println(l3.convertTo(Unit.FEET)); // 6.0
     }
 }
